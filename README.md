@@ -1,4 +1,4 @@
 Blackjack
 =========
 
-A blackjack game made by using backbone.js
+A simple blackjack game made by using backbone.js
