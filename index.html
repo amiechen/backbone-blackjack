@@ -20,17 +20,19 @@
 	<!-- Underscore Template -->
 	<script type="text/template" id="game-template">
 
-		
-		<button class="hit">Hit</button>
-		<button class="stand">Stand</button>
-		<button class="bet">Bet</button>
-
+		<div class ="buttons">
+			<button class="hit">Hit</button>
+			<button class="stand">Stand</button>
+		</div>
 	</script>
 	
 	<script type="text/template" id="card-template">
 		<img src="<%= src %>" />
 	</script>
 	<script type="text/template" id="player-template">
-		<h1><%= name %></h1>
+		<h3 ><%= name %></h3>
+		<span><%= score %></span>
+		<span class="status"><%= status%></span>
+
 	</script>
 </html>

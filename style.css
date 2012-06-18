@@ -1,4 +1,30 @@
+
+*{
+	font-family: Helvetica;
+	text-align: center;
+}
+.status {
+	color: #ff9035;
+
+}
+H1 {
+	text-align: left;
+	padding-left: 200px;
+}
+
 LI{
 	list-style: none;
 	display: inline-block;
+}
+div.player {
+	float: left;
+
+}
+div.buttons {
+	width: 200px;
+	padding-left: 300px;
+}
+button {
+	padding: 5px;
+	border-radius: 5px;
 }

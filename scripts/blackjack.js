@@ -82,12 +82,13 @@ $(function(){
 		//A Player can draw then addCard to his hand, and bet
 		var Player = Backbone.Model.extend({
 			initialize: function(){
-				
+
 			},
 			defaults: {
 				name: "AI",
 				score: 0,
-				money: 0
+				money: 0,
+				type: "AI"
 			},
 			score: function(){
 				//this.set("score": this.reduce(this.get("num")));//what is this at this point?
@@ -109,10 +110,16 @@ $(function(){
 		
 		var PlayerView = Backbone.View.extend({
 			tagName: "div",
+			className: "player",
+			template: _.template($("#player-template").html()),
 			initialize: function(){
-				this.$el.append(new HandView({collection: this.model.get("currentHand")}).$el);
+				this.render();
+				this.model.bind("change", this.render, this);
+				
 			},
 			render: function(){
+				this.$el.html(this.template(this.model.toJSON()));
+				this.$el.append(new HandView({collection: this.model.get("currentHand")}).$el);
 			}
 		});
 		
@@ -138,13 +145,18 @@ $(function(){
 		
 		//Create a Game model
 		var Game = Backbone.Model.extend({
+			defaults: {
+				currentPlayer: 0
+			},
 			initialize: function(){
 				this.deck = new Deck;
 				this.players = new Players;
-				this.players.add({name: "AI", currentHand: new Hand(), money: 100});
-				this.players.add({name: "Dealer", currentHand: new Hand()});
-				this.currentPlayer = 0;
+				this.players.add({name: "You", currentHand: new Hand(), money: 100, type: "human"});
+				this.players.add({name: "AI", currentHand: new Hand(), money: 100, type: "AI"});
+				this.players.add({name: "AI", currentHand: new Hand(), money: 100, type: "AI"});
+				this.players.add({name: "Dealer", currentHand: new Hand(), type: "dealer"});
 				this.deal();
+				this.play();
 			},
 			deal: function() {
 				var game = this;
@@ -156,9 +168,10 @@ $(function(){
 				});//each player add two top cards into his hand
 			},
 			hit: function() {
-				var curPlayer = this.players.at(this.currentPlayer);
+				var curPlayer = this.players.at(this.get("currentPlayer"));
 				curPlayer.get("currentHand").add(this.deck.draw());
 				var currentScore = this.getScore(curPlayer);
+				curPlayer.set("score", currentScore);
 				if(currentScore >= 21){
 					//busted
 					this.nextTurn();
@@ -167,6 +180,15 @@ $(function(){
 			stand: function() {
 				this.nextTurn();
 				
+			},
+			play: function(){
+				var curPlayer = this.players.at(this.get("currentPlayer"));
+				if (curPlayer.get("type") === "AI" || curPlayer.get("type") === "dealer"){
+					while(curPlayer.get("score") < 17) {
+						this.hit();
+					}
+					this.stand();
+				}
 			},
 			getScore: function(player) {
 				var total = 0, aces = 0;
@@ -179,7 +201,7 @@ $(function(){
 				});
 				total = aces*10 + total;
 				while(aces > 0) {
-					if(total < 21){
+					if(total <= 21){
 						return total;
 					}
 					else {
@@ -190,13 +212,47 @@ $(function(){
 				return total;
 			},
 			nextTurn: function() {
-				this.currentPlayer = this.currentPlayer + 1;
-				if(this.currentPlayer > this.players.length - 1) {
+				var curPlayer = this.get("currentPlayer");
+				curPlayer = curPlayer + 1;
+				if(curPlayer > this.players.length - 1) {
 					//game is over
-					determineWinner();
+					this.determineWinner();
+				}
+				else {
+					this.set("currentPlayer", curPlayer);
+					this.play();
 				}
 			},
-			determineWinner: function() {}
+			determineWinner: function() {
+				var dealer = this.players.where({type: "dealer"})[0];
+				var dealerScore = dealer.get("score"); 			
+				function compareToDealer(playerScore, dealerScore){
+					if(playerScore > 21) {
+						return "BUST";
+					} else if (!dealerScore) {
+						return "";
+					}
+					else if (playerScore > dealerScore || dealerScore > 21) {
+						return "WIN";
+					} else if (playerScore === dealerScore) {
+						return "PUSH";
+					} else if (playerScore < dealerScore){
+						return "LOSE";
+					}
+				}
+				this.players.each(function (player) {
+					var result;
+					if (player.get("type") === "dealer") {
+						result = compareToDealer(dealerScore)
+					}
+					else {
+						var playerScore = player.get("score");
+						result = compareToDealer(playerScore, dealerScore);
+					}
+					player.set("status",result);
+				});
+				
+			}
 		});
 
 		
@@ -207,6 +263,7 @@ $(function(){
 			template: _.template($("#game-template").html()),
 			initialize: function(){
 				var game = this;
+				game.model.bind("change:currentPlayer", this.showHideButton, game.model);
 				game.$el.html(this.template(this.model.toJSON()));
 				game.model.players.each(function (player){
     				var playerView = new PlayerView({model: player});
@@ -222,6 +279,13 @@ $(function(){
 			},
 			stand: function() {
 				this.model.stand();
+			},
+			showHideButton: function() {
+				if (this.players.at(this.get("currentPlayer")).get("type") === "AI" || this.players.at(this.get("currentPlayer")).get("type") === "dealer") {
+					$("button").hide();
+				} else {
+					$("button").show();
+				}
 			}
 			
 		});
