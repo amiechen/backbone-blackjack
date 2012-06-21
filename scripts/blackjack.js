@@ -31,7 +31,7 @@ $(function(){
 			model: Card,
 			initialize: function(){
 				
-				//when a deck is created, it loop through Card model 52 times and print out each card
+				//when a deck is created, it loop through Card model 13 times for each suit to print out each card
 				for (var i=1; i<14; i++) {
 					this.add({suit: "club", num: i, src: "images/c" + i + ".png"});//set attributes for each card
 					this.add({suit: "heart", num: i, src: "images/h" + i + ".png"});
@@ -39,7 +39,7 @@ $(function(){
 					this.add({suit: "diamond", num: i, src: "images/d" + i + ".png"});
 				}
 				this.shuffle();
-				//console.log(this.toJSON());
+				//console.log(this.toJSON()); this will print all 52 cards in the console
 			}, 
 			shuffle: function(){				
 				for (var i=0; i<100; i++) {
@@ -61,60 +61,49 @@ $(function(){
 					}
 					return drawnCards;	
 				} else {
-					drawnCards.push(this.shift());
+					drawnCards.push(this.shift());//"this" is the deck model. shift() will take out n card from teh deck
 					return drawnCards;
 				}
 			}
 		});
 				
-		//update the hand when player addCard
-		//calculate the total
+
 		var Hand = Backbone.Collection.extend({
 			model: Card,
 			initialize: function() {
-				this.bind("add", this.log, this);
+				this.bind("add", this.log, this); //update the hand when player addCard
 			},
 			log: function(card) {
-					console.log(card);
+				console.log(card);
 			}
 		});
 		
-		//A Player can draw then addCard to his hand, and bet
 		var Player = Backbone.Model.extend({
-			initialize: function(){
-
-			},
 			defaults: {
 				name: "AI",
 				score: 0,
 				money: 0,
 				type: "AI"
-			},
-			score: function(){
-				//this.set("score": this.reduce(this.get("num")));//what is this at this point?
-			},
-			endTurn: function(){
-				
 			}
 		});
 		
 		var Players = Backbone.Collection.extend({
 			model: Player,
 			initialize: function() {
-				this.bind("add", this.log, this);
+				this.bind("add", this.log, this);//update the players when a player is added 
 			},
 			log: function(player) {
 				console.log(player);
 			}
 		})
-		
+		//div.player is the DOM element of this backbone view object
 		var PlayerView = Backbone.View.extend({
 			tagName: "div",
 			className: "player",
 			template: _.template($("#player-template").html()),
 			initialize: function(){
 				this.render();
-				this.model.bind("change", this.render, this);
+				this.model.bind("change", this.render, this);//adding "this" at the end to make sure the function context of the render is still this backbone view object
 				
 			},
 			render: function(){
